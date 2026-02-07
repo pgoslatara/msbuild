@@ -151,6 +151,8 @@ namespace Microsoft.Build.UnitTests.BackEnd
         public void GetNodeReuseThreshold_DefaultImplementation_ReturnsHalfOfCoreCount()
         {
             // Test the default implementation by not providing a threshold override
+            // Note: This test uses the actual system core count, so results vary by machine,
+            // but the mathematical relationship (threshold = max(1, cores/2)) should hold on all systems
             int coreCount = NativeMethodsShared.GetLogicalCoreCount();
             int expectedThreshold = Math.Max(1, coreCount / 2);
             

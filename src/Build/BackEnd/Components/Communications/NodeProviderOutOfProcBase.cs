@@ -619,16 +619,24 @@ namespace Microsoft.Build.BackEnd
 
         /// <summary>
         /// Counts the number of active MSBuild node processes of the same type system-wide.
+        /// Uses improved node detection logic to filter by NodeMode and handle dotnet processes.
         /// </summary>
         /// <returns>The count of active node processes</returns>
         protected virtual int CountSystemWideActiveNodes()
         {
             try
             {
-                (string expectedProcessName, IList<Process> nodeProcesses) = GetPossibleRunningNodes();
+                // Use the improved node detection logic from PR #13256
+                // Filter for OutOfProcNode (worker nodes) to get accurate count
+                (string expectedProcessName, IList<Process> nodeProcesses) = GetPossibleRunningNodes(
+                    msbuildLocation: null, 
+                    expectedNodeMode: NodeMode.OutOfProcNode);
                 
-                // Count all processes with the same name (MSBuild or MSBuildTaskHost)
-                // This is an approximation - it counts all MSBuild processes, not just idle nodes
+                // Count only worker nodes (filtered by NodeMode)
+                // This automatically handles:
+                // - Filtering dotnet processes to those hosting MSBuild.dll
+                // - Extracting and matching NodeMode from command line
+                // - Cross-platform process command line retrieval
                 int count = nodeProcesses.Count;
                 
                 // Dispose the process objects
